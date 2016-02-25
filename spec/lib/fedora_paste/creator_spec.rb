@@ -6,12 +6,12 @@ describe FedoraPaste::Creator do
       to_return(
         {
           status: 200,
-          headers: { 'content_type': 'application/json'},
+          headers: { 'content_type': 'text/html; charset=UTF-8' },
           body: '{"result":{"id":1234}}'
         },
         {
           status: 200,
-          headers: { 'content_type': 'application/json'},
+          headers: { 'content_type': 'text/html; charset=UTF-8' },
           body: '{"result":{"id":1235}}'
         },
       )
@@ -36,11 +36,25 @@ describe FedoraPaste::Creator do
 
     it 'send post request to fedora paste app' do
       creator = FedoraPaste::Creator.new
-      allow(HTTParty).to receive(:post).and_call_original
 
       creator.create('Some paste')
 
-      expect(HTTParty).to have_received(:post).with('http://paste.fedoraproject.org/')
+      expect(a_request(:post, 'http://paste.fedoraproject.org/')).to have_been_made
+    end
+
+    it 'sends post request with mandatory params' do
+      creator = FedoraPaste::Creator.new
+
+      creator.create('Some paste')
+
+      body = {
+        api_submit: 'true',
+        mode: 'json',
+        paste_data: 'Some paste',
+        paste_lang: 'text',
+      }
+      request = a_request(:post, 'http://paste.fedoraproject.org/').with(body: body)
+      expect(request).to have_been_made
     end
 
     context 'empty paste text' do
